@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, user-scalable=no"
+    >
+
+    <title>Lunar Dash</title>
+
+    <!--
+        BUILD STAMP — bump this whenever any file below changes.
+        No build step is used, so the query strings below force browsers
+        and tunnels/proxies to fetch the updated files.
+    -->
+    <script>window.LUNAR_DASH_BUILD = '20261003-garage-uiscripts';</script>
+
+    <link rel="icon" href="./Images/favicon.ico" type="image/x-icon">
+
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="MainMenu.css?v=20261003-garage-uiscripts">
+    <link rel="stylesheet" href="Game.css?v=20261003-garage-uiscripts">
+</head>
+
+<body>
+
+    <!-- ============================================================
+         LUNAR DASH
+         ============================================================ -->
+    <canvas id="stage-canvas"></canvas>
+
+    <!-- ============================================================
+         COLOR CUSTOMIZATION PANEL
+         ============================================================ -->
+    <div id="colour-panel" class="colour-panel" hidden>
+
+        <label>
+            Primary
+            <input
+                type="color"
+                id="color-primary"
+                value="#ffffff"
+            >
+        </label>
+
+        <label>
+            Secondary
+            <input
+                type="color"
+                id="color-secondary"
+                value="#ffffff"
+            >
+        </label>
+
+        <label>
+            Glow
+            <input
+                type="color"
+                id="color-glow"
+                value="#ffffff"
+            >
+        </label>
+
+    </div>
+
+    <!-- ============================================================
+         BOOT ERROR
+         ============================================================ -->
+    <div id="boot-error" class="boot-error" hidden></div>
+
+    <!-- ============================================================
+         JAVASCRIPT LOAD ORDER
+
+         Data.js
+             ↓
+         SheetHandler.js
+             ↓
+         BlockDefinitions.js
+             ↓
+         Levels.js
+             ↓
+         IconHandler.js
+             ↓
+         PlayerController.js
+             ↓
+         PauseMenu.js
+             ↓
+         MainHandler.js
+    ============================================================ -->
+
+    <!-- 1. GLOBAL GAME DATA -->
+    <script src="Data.js?v=20261003-garage-uiscripts" defer></script>
+
+    <!-- 2. SPRITE / PLIST ATLAS HANDLER -->
+    <script src="SheetHandler.js?v=20261003-garage-uiscripts" defer></script>
+
+    <!-- 3. BLOCK / OBJECT DEFINITIONS -->
+    <script src="/Blocks/BlockDefinitions.js?v=20261003-garage-uiscripts" defer></script>
+
+    <!-- 4. LEVEL SYSTEM -->
+    <script src="Levels.js?v=20261003-garage-uiscripts" defer></script>
+
+    <!-- 5. PLAYER ICON SYSTEM -->
+    <script src="IconHandler.js?v=20261003-garage-uiscripts" defer></script>
+
+    <!-- 6. PLAYER PHYSICS -->
+    <script src="PlayerController.js?v=20261003-garage-uiscripts" defer></script>
+
+    <!-- 7. PAUSE MENU
+         Loaded after the systems it uses, but before MainHandler.js.
+         MainHandler.js can call the pause-menu functions without owning
+         the entire pause renderer. -->
+    <script src="/UIScripts/PauseMenu.js?v=20261003-garage-uiscripts" defer></script>
+
+    <!-- 8. PLAYER SCREEN (icon kit + left/right rails)
+         Owns the PLAYER renderer MainHandler.js used to carry inline:
+         the mode row, preview, icon grid, shop sign and currency rail.
+         Loaded before the colour kit it draws alongside. -->
+    <script src="/UIScripts/PlayerScreen.js?v=20261003-garage-uiscripts" defer></script>
+
+    <!-- 9. COLOUR KIT (channel tabs + paged swatch grid)
+         Owns the colour half of the PLAYER screen, drawn by renderIcons(). -->
+    <script src="/UIScripts/ColourKit.js?v=20261003-garage-uiscripts" defer></script>
+
+    <!-- 10. MAIN GAME CONTROLLER
+         Loaded LAST because it depends on all systems above. -->
+    <script src="MainHandler.js?v=20261003-garage-uiscripts" defer></script>
+
+</body>
+</html>
