@@ -3047,6 +3047,16 @@ function drawGamePlayer(game) {
   ctx.rotate(player.renderRotation);
 
   if (hasArt) {
+    // Icon canvases are rendered from the UHD atlas at high resolution, then
+    // reduced to gameplay size. Keep filtering enabled for this final resize;
+    // nearest-neighbour here was turning the icons into visible chunky pixels.
+    const prevSmoothing = ctx.imageSmoothingEnabled;
+    const prevQuality = ctx.imageSmoothingQuality;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(game.iconCanvas, -size / 2, -size / 2, size, size);
+    ctx.imageSmoothingEnabled = prevSmoothing;
+    ctx.imageSmoothingQuality = prevQuality;
     // Nearest-neighbour keeps the cube crisp; only the glow layers were blurred
     // when the icon was composited, so this never softens the artwork.
     const prevSmoothing = ctx.imageSmoothingEnabled;

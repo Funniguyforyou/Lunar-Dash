@@ -46,6 +46,30 @@ const iconFiles = {
     sheet: 'Images/Icons/Cube/Cube1/player_00-uhd.png',
     plist: 'Images/Icons/Cube/Cube1/player_00-uhd.plist',
   },
+  'Ship/1': {
+    sheet: 'Images/Icons/Ship/Ship1/ship_01-uhd.png',
+    plist: 'Images/Icons/Ship/Ship1/ship_01-uhd.plist',
+  },
+  'Ball/1': {
+    sheet: 'Images/Icons/Ball/Ball1/player_ball_00-uhd.png',
+    plist: 'Images/Icons/Ball/Ball1/player_ball_00-uhd.plist',
+  },
+  'UFO/1': {
+    sheet: 'Images/Icons/UFO/UFO1/bird_01-uhd.png',
+    plist: 'Images/Icons/UFO/UFO1/bird_01-uhd.plist',
+  },
+  'Wave/1': {
+    sheet: 'Images/Icons/Wave/Wave1/dart_01-uhd.png',
+    plist: 'Images/Icons/Wave/Wave1/dart_01-uhd.plist',
+  },
+  'Robot/1': {
+    sheet: 'Images/Icons/Robot/Robot1/robot_01-uhd.png',
+    plist: 'Images/Icons/Robot/Robot1/robot_01-uhd.plist',
+  },
+  'Spider/1': {
+    sheet: 'Images/Icons/Spider/Spider1/spider_01-uhd.png',
+    plist: 'Images/Icons/Spider/Spider1/spider_01-uhd.plist',
+  },
 };
 
 function getIconPaths(mode, number) {
@@ -153,6 +177,55 @@ function fillLayerBorder(layerCanvas, px, color) {
 // Figures out which parsed frame is base/secondary/glow/innerGlow/extra by
 // suffix, without needing to know the internal name prefix ahead of time.
 function categorizeFrames(frames) {
+  const result = {
+    base: null,
+    secondary: null,
+    glow: null,
+    innerGlow: null,
+    extra: null,
+    dome: null,
+    parts: {},
+  };
+
+  const isComplex = Object.keys(frames).some((key) => /^\s*(robot|spider)_/i.test(key));
+
+  for (const [key, frame] of Object.entries(frames)) {
+    // UFO dome is a real, separate GD layer: <name>_3_001.png.
+    if (/_3_\d+\.png$/i.test(key)) {
+      result.dome = frame;
+      continue;
+    }
+
+    const partMatch = key.match(/_(\d{2})_(001|2_001|glow_001|extra_001|innerGlow_001)\.png$/i);
+    if (partMatch) {
+      const partNumber = Number(partMatch[1]);
+      if (isComplex) {
+        if (!result.parts[partNumber]) {
+          result.parts[partNumber] = { base: null, secondary: null, glow: null, extra: null, innerGlow: null };
+        }
+        const kind = partMatch[2].toLowerCase();
+        if (kind === '001') result.parts[partNumber].base = frame;
+        else if (kind === '2_001') result.parts[partNumber].secondary = frame;
+        else if (kind === 'glow_001') result.parts[partNumber].glow = frame;
+        else if (kind === 'extra_001') result.parts[partNumber].extra = frame;
+        else if (kind === 'innerglow_001') result.parts[partNumber].innerGlow = frame;
+      } else if (partNumber === 1) {
+        const kind = partMatch[2].toLowerCase();
+        if (kind === '001') result.base = frame;
+        else if (kind === '2_001') result.secondary = frame;
+        else if (kind === 'glow_001') result.glow = frame;
+        else if (kind === 'extra_001') result.extra = frame;
+        else if (kind === 'innerglow_001') result.innerGlow = frame;
+      }
+      continue;
+    }
+
+    // Backwards-compatible fallback for unusual simple sheets.
+    if (/_2_\d+\.png$/i.test(key)) result.secondary = frame;
+    else if (/_innerGlow_\d+\.png$/i.test(key)) result.innerGlow = frame;
+    else if (/_glow_\d+\.png$/i.test(key)) result.glow = frame;
+    else if (/_extra_\d+\.png$/i.test(key)) result.extra = frame;
+    else result.base = frame;
   const result = { base: null, secondary: null, glow: null, innerGlow: null, extra: null };
 
   for (const [key, frame] of Object.entries(frames)) {
@@ -602,6 +675,106 @@ function renderCubeIcon(canvas, image, layers, colors, options) {
   ctx.restore();
 }
 
+// -------------------- Robot / Spider idle composition --------------------
+// Geometry Dash does not store Robot/Spider as one drawable sprite. Their sheets
+// contain reusable body parts, and the game positions those parts with animation
+// data. These are the official idle poses used as the static starting frame.
+const COMPLEX_IDLE = {
+  [EntityTypes.ROBOT]: [
+    { part: 3, x: -7.175, y: -6.875, sx: 0.9969, sy: 0.9984, rot: -29.6729, flipX: false, flipY: false, z: 0 },
+    { part: 2, x: -7.175, y: -1.025, sx: 0.9968, sy: 0.9984, rot: 57.9682, flipX: false, flipY: false, z: 1 },
+    { part: 4, x: -2.675, y: -10.9,  sx: 1,      sy: 1,      rot: 0,       flipX: false, flipY: false, z: 2 },
+    { part: 1, x: 0.25,   y: 5.5,    sx: 0.9997, sy: 0.9998, rot: -2.2859, flipX: false, flipY: false, z: 3 },
+    { part: 3, x: -4.525, y: -6.625, sx: 0.9999, sy: 0.9999, rot: -42.9415, flipX: false, flipY: false, z: 4 },
+    { part: 2, x: -5.75,  y: -2.15,  sx: 0.9994, sy: 0.9997, rot: 42.5012, flipX: false, flipY: false, z: 5 },
+    { part: 4, x: 2.275,  y: -10.9,  sx: 1,      sy: 1,      rot: 0,       flipX: false, flipY: false, z: 6 },
+  ],
+  [EntityTypes.SPIDER]: [
+    { part: 2, x: 5.025,   y: -6.725, sx: 0.8838, sy: 0.8838, rot: 0,       flipX: false, flipY: false, z: 0 },
+    { part: 2, x: 14.35,   y: -6.725, sx: 0.8838, sy: 0.8838, rot: 0,       flipX: true,  flipY: false, z: 1 },
+    { part: 4, x: -4.45,   y: 0.075,   sx: 1,      sy: 1,      rot: -7.6821, flipX: false, flipY: false, z: 2 },
+    { part: 1, x: 0.575,   y: 4.05,    sx: 1,      sy: 1,      rot: 0,       flipX: false, flipY: false, z: 3 },
+    { part: 3, x: -13.3,   y: -6.9,   sx: 0.9999, sy: 0.9999, rot: 38.964, flipX: false, flipY: false, z: 4 },
+    { part: 2, x: -2.475,  y: -5.975, sx: 1,      sy: 1,      rot: 0,       flipX: false, flipY: false, z: 5 },
+  ],
+};
+
+function drawTransformedLayer(destCtx, image, frame, colors, originX, originY, transform, options = {}) {
+  if (!frame) return;
+  const layer = extractLayer(image, frame, options.color || colors.primary, !!options.skipTint);
+  const scaleX = (transform.sx ?? 1) * (transform.flipX ? -1 : 1);
+  const scaleY = (transform.sy ?? 1) * (transform.flipY ? -1 : 1);
+  const rad = (transform.rot || 0) * Math.PI / 180;
+  const x = originX + transform.x * 4;
+  const y = originY - transform.y * 4;
+  const w = layer.width;
+  const h = layer.height;
+
+  destCtx.save();
+  destCtx.translate(x, y);
+  destCtx.rotate(rad);
+  destCtx.scale(scaleX, scaleY);
+  destCtx.drawImage(layer, -w / 2, -h / 2);
+  destCtx.restore();
+}
+
+function renderComplexIcon(canvas, mode, image, parts, colors) {
+  const pose = COMPLEX_IDLE[mode];
+  if (!pose) return false;
+
+  // The UHD sheets are authored at roughly 4x gameplay resolution. Render the
+  // complete complex icon into a 120x120 logical art space, then downsample once
+  // into the actual 30x30 gameplay/icon canvas. This keeps the source art smooth
+  // instead of making MainHandler shrink a huge canvas with nearest-neighbour.
+  const logicalSize = 120;
+  const outputSize = 30;
+
+  canvas.width = outputSize;
+  canvas.height = outputSize;
+  canvas.iconArtSize = outputSize;
+  canvas.iconPad = 0;
+
+  const work = document.createElement('canvas');
+  work.width = logicalSize;
+  work.height = logicalSize;
+  const workCtx = work.getContext('2d');
+  workCtx.clearRect(0, 0, logicalSize, logicalSize);
+
+  const cx = logicalSize / 2;
+  const cy = logicalSize / 2;
+
+  // Glow behind all parts.
+  for (const p of pose) {
+    const group = parts[p.part];
+    if (!group || !group.glow) continue;
+    drawTransformedLayer(workCtx, image, group.glow, colors, cx, cy, p, { color: colors.glow });
+  }
+
+  // Main parts in their GD z order.
+  const ordered = [...pose].sort((a, b) => a.z - b.z);
+  for (const p of ordered) {
+    const group = parts[p.part];
+    if (!group) continue;
+    if (group.secondary) {
+      drawTransformedLayer(workCtx, image, group.secondary, colors, cx, cy, p, { color: colors.secondary });
+    }
+    if (group.base) {
+      drawTransformedLayer(workCtx, image, group.base, colors, cx, cy, p, { color: colors.primary });
+    }
+    if (group.extra) {
+      drawTransformedLayer(workCtx, image, group.extra, colors, cx, cy, p, { color: '#ffffff', skipTint: true });
+    }
+  }
+
+  // One high-quality downsample from UHD-ish art to the 30x30 gameplay icon.
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, outputSize, outputSize);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(work, 0, 0, logicalSize, logicalSize, 0, 0, outputSize, outputSize);
+  return true;
+}
+
 async function renderIcon(canvas, mode, number, colors) {
   const { sheet, plist } = getIconPaths(mode, number);
   let image;
@@ -609,6 +782,21 @@ async function renderIcon(canvas, mode, number, colors) {
   try {
     ({ image, layers } = await loadSheet(sheet, plist));
   } catch (err) {
+    drawFallbackIcon(canvas, mode, number, colors);
+    return;
+  }
+
+  // Robot and Spider are multi-part animated icons. Their idle pose is composed
+  // from the four part groups in the atlas instead of treating the last frame in
+  // the plist as the whole icon.
+  if (mode === EntityTypes.ROBOT || mode === EntityTypes.SPIDER) {
+    if (renderComplexIcon(canvas, mode, image, layers.parts, colors)) return;
+    drawFallbackIcon(canvas, mode, number, colors);
+    return;
+  }
+
+  const { base, secondary, glow, innerGlow, extra, dome } = layers;
+  const candidates = [base, secondary, glow, innerGlow, extra, dome].filter(Boolean);
     // A mode with no art yet (or a failed download) falls back to a simple
     // vector cube so the player is never invisible.
     drawFallbackIcon(canvas, mode, number, colors);
@@ -622,6 +810,9 @@ async function renderIcon(canvas, mode, number, colors) {
     return;
   }
 
+  // Cube keeps its dedicated renderer. All other simple forms use the same
+  // layer order Geometry Dash uses: glow, UFO dome, secondary, primary, extra.
+  if (mode === EntityTypes.CUBE && base && secondary && glow) {
   // The GD cube is the one shape with a full outline/body/frame/eye structure, so
   // it gets the layered renderer. Anything else keeps the generic compositing
   // path below.
@@ -632,6 +823,83 @@ async function renderIcon(canvas, mode, number, colors) {
     });
     return;
   }
+
+  // Render non-cube forms into a larger working/output canvas. The old v4
+  // version accidentally referenced these renderer options without defining
+  // them, which made the generic icons throw after their sheets loaded.
+  // Keeping the final canvas at 120px also gives the game enough source pixels
+  // to scale the icon down cleanly instead of enlarging a 30px bitmap.
+  const detailScale = getDetailScale(mode, number);
+  const glowTrim = getGlowTrim(mode, number);
+  const borderFill = getBaseBorderFill(mode, number);
+  const sourceW = Math.max(...candidates.map((f) => f.spriteSourceSize.x));
+  const sourceH = Math.max(...candidates.map((f) => f.spriteSourceSize.y));
+  const sourceSize = Math.max(sourceW, sourceH);
+  const outputSize = 120;
+
+  const work = document.createElement('canvas');
+  work.width = sourceSize;
+  work.height = sourceSize;
+  const workCtx = work.getContext('2d');
+  workCtx.clearRect(0, 0, sourceSize, sourceSize);
+  workCtx.imageSmoothingEnabled = true;
+  workCtx.imageSmoothingQuality = 'high';
+
+  if (glow) {
+    const glowLayer = shaveLayerEdge(extractLayer(image, glow, colors.glow), glowTrim);
+    drawLayer(workCtx, glowLayer, glow, sourceSize, sourceSize);
+  }
+  if (innerGlow) {
+    drawLayer(workCtx, extractLayer(image, innerGlow, colors.glow), innerGlow, sourceSize, sourceSize);
+  }
+  if (secondary) {
+    drawLayer(workCtx, extractLayer(image, secondary, colors.secondary), secondary, sourceSize, sourceSize, detailScale);
+  }
+  if (base) {
+    const baseLayer = fillLayerBorder(extractLayer(image, base, colors.primary), borderFill, colors.primary);
+    drawLayer(workCtx, baseLayer, base, sourceSize, sourceSize);
+  }
+  if (extra) {
+    drawLayer(workCtx, extractLayer(image, extra, '#ffffff', true), extra, sourceSize, sourceSize);
+  }
+  if (dome) {
+    // UFO dome is a separate GD layer. Keep it white/detail-coloured and let its
+    // plist offset place it over the body naturally.
+    drawLayer(workCtx, extractLayer(image, dome, '#ffffff', true), dome, sourceSize, sourceSize);
+  }
+
+  // Ship carries the currently selected cube, like the real Geometry Dash ship.
+  if (mode === EntityTypes.SHIP) {
+    const cubeNumber = (typeof playerData !== 'undefined' && playerData.selectedIcons)
+      ? (playerData.selectedIcons[EntityTypes.CUBE] || getStarterIcon(EntityTypes.CUBE))
+      : getStarterIcon(EntityTypes.CUBE);
+    if (cubeNumber != null) {
+      const cubeCanvas = document.createElement('canvas');
+      await renderIcon(cubeCanvas, EntityTypes.CUBE, cubeNumber, colors);
+      const cubeDrawSize = 12;
+      workCtx.save();
+      workCtx.imageSmoothingEnabled = true;
+      workCtx.imageSmoothingQuality = 'high';
+      // The cube sits inside the ship body. Its position is expressed in the
+      // source-space square so it scales together with the ship.
+      const shipScale = sourceSize / outputSize;
+      const riderSize = cubeDrawSize * shipScale;
+      const riderX = sourceSize / 2 - riderSize / 2;
+      const riderY = sourceSize / 2 - riderSize * 0.82;
+      workCtx.drawImage(cubeCanvas, riderX, riderY, riderSize, riderSize);
+      workCtx.restore();
+    }
+  }
+
+  canvas.width = outputSize;
+  canvas.height = outputSize;
+  canvas.iconArtSize = outputSize;
+  canvas.iconPad = 0;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, outputSize, outputSize);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(work, 0, 0, sourceSize, sourceSize, 0, 0, outputSize, outputSize);
   const originW = Math.max(...candidates.map((f) => f.spriteSourceSize.x));
   const originH = Math.max(...candidates.map((f) => f.spriteSourceSize.y));
 
