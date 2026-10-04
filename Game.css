@@ -1,0 +1,18 @@
+/* Game.css
+   Gameplay-specific page behaviour.
+
+   index.html is a single page that hosts the menu, level select, gameplay and
+   pause menu, so the canvas itself (#stage-canvas), the colour pickers and the
+   boot error banner are styled in MainMenu.css. This file only holds the extra
+   bits that matter while a level is actually running. */
+
+#stage-canvas {
+    /* Keep the browser's own long-press and tap-highlight out of a run */
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    /* Stop the page rubber-banding on mobile when you tap to jump */
+    overscroll-behavior: none;
+}

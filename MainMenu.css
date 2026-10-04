@@ -1,0 +1,98 @@
+/* MainMenu.css
+   Styles for the single-page app shell.
+
+   All of the main menu, icon select, level select, gameplay and pause UI is
+   drawn onto #stage-canvas by MainHandler.js. This file therefore only covers
+   the page itself, plus the two things that deliberately stay in the DOM: the
+   native <input type="color"> controls and the boot error banner. */
+
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+
+    background: #0b1026;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+#stage-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none; /* stop mobile taps scrolling or zooming mid-run */
+    cursor: pointer;
+}
+
+/* ---------- Colour pickers ----------
+   A real colour picker beats anything drawn on a canvas, so the three colour
+   controls live in the DOM. MainHandler shows this only on the icons screen. */
+.colour-panel {
+    position: fixed;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+
+    display: flex;
+    gap: 26px;
+    padding: 12px 22px;
+
+    background: rgba(8, 10, 28, 0.85);
+    border: 2px solid rgba(255, 255, 255, 0.18);
+    border-radius: 16px;
+}
+
+.colour-panel[hidden] {
+    display: none;
+}
+
+.colour-panel label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+
+    font-size: 11px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.colour-panel input[type="color"] {
+    width: 58px;
+    height: 36px;
+    padding: 0;
+    border: 2px solid rgba(255, 255, 255, 0.22);
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+}
+
+/* ---------- Boot error ---------- */
+.boot-error {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+
+    max-width: 76vw;
+    padding: 14px 20px;
+
+    font-size: 14px;
+    color: #ffd9d9;
+    background: rgba(90, 16, 24, 0.94);
+    border: 2px solid #ff6b6b;
+    border-radius: 12px;
+    white-space: pre-wrap;
+}
+
+.boot-error[hidden] {
+    display: none;
+}
