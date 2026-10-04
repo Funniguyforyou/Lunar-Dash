@@ -3057,6 +3057,12 @@ function drawGamePlayer(game) {
     ctx.drawImage(game.iconCanvas, -size / 2, -size / 2, size, size);
     ctx.imageSmoothingEnabled = prevSmoothing;
     ctx.imageSmoothingQuality = prevQuality;
+    // Nearest-neighbour keeps the cube crisp; only the glow layers were blurred
+    // when the icon was composited, so this never softens the artwork.
+    const prevSmoothing = ctx.imageSmoothingEnabled;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(game.iconCanvas, -size / 2, -size / 2, size, size);
+    ctx.imageSmoothingEnabled = prevSmoothing;
   } else {
     // Fallback square, so the player stays visible if icon art failed to load
     ctx.fillStyle = playerData.colors.primary;

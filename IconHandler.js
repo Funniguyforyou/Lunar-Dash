@@ -226,6 +226,22 @@ function categorizeFrames(frames) {
     else if (/_glow_\d+\.png$/i.test(key)) result.glow = frame;
     else if (/_extra_\d+\.png$/i.test(key)) result.extra = frame;
     else result.base = frame;
+  const result = { base: null, secondary: null, glow: null, innerGlow: null, extra: null };
+
+  for (const [key, frame] of Object.entries(frames)) {
+    if (/_2_\d+\.png$/i.test(key)) {
+      result.secondary = frame;
+    } else if (/_innerGlow_\d+\.png$/i.test(key)) {
+      // Checked before _glow_ so a future "_innerGlow_" style name cannot be
+      // mistaken for the outer ring.
+      result.innerGlow = frame;
+    } else if (/_glow_\d+\.png$/i.test(key)) {
+      result.glow = frame;
+    } else if (/_extra_\d+\.png$/i.test(key)) {
+      result.extra = frame;
+    } else {
+      result.base = frame; // anything left over is treated as the base layer
+    }
   }
 
   return result;
@@ -781,6 +797,14 @@ async function renderIcon(canvas, mode, number, colors) {
 
   const { base, secondary, glow, innerGlow, extra, dome } = layers;
   const candidates = [base, secondary, glow, innerGlow, extra, dome].filter(Boolean);
+    // A mode with no art yet (or a failed download) falls back to a simple
+    // vector cube so the player is never invisible.
+    drawFallbackIcon(canvas, mode, number, colors);
+    return;
+  }
+  const { base, secondary, glow, innerGlow, extra } = layers;
+
+  const candidates = [base, secondary, glow, innerGlow, extra].filter(Boolean);
   if (candidates.length === 0) {
     drawFallbackIcon(canvas, mode, number, colors);
     return;
@@ -789,6 +813,10 @@ async function renderIcon(canvas, mode, number, colors) {
   // Cube keeps its dedicated renderer. All other simple forms use the same
   // layer order Geometry Dash uses: glow, UFO dome, secondary, primary, extra.
   if (mode === EntityTypes.CUBE && base && secondary && glow) {
+  // The GD cube is the one shape with a full outline/body/frame/eye structure, so
+  // it gets the layered renderer. Anything else keeps the generic compositing
+  // path below.
+  if (base && secondary && glow) {
     renderCubeIcon(canvas, image, layers, colors, {
       detailScale: getDetailScale(mode, number),
       glowTrim: getGlowTrim(mode, number),
@@ -872,6 +900,33 @@ async function renderIcon(canvas, mode, number, colors) {
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(work, 0, 0, sourceSize, sourceSize, 0, 0, outputSize, outputSize);
+  const originW = Math.max(...candidates.map((f) => f.spriteSourceSize.x));
+  const originH = Math.max(...candidates.map((f) => f.spriteSourceSize.y));
+
+  canvas.width = originW;
+  canvas.height = originH;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, originW, originH);
+
+  // Draw order: glow behind, then innerGlow, then secondary, then base on top,
+  // extra last. The base is drawn after the secondary on purpose: the base
+  // carries the hollow centre, so it is what cuts the transparent gap around the
+  // middle. Both glow frames take the same colour, so every ring round every
+  // square follows the player's glow choice.
+  const detailScale = getDetailScale(mode, number);
+  const borderFill = getBaseBorderFill(mode, number);
+  const glowTrim = getGlowTrim(mode, number);
+  if (glow) {
+    const glowLayer = shaveLayerEdge(extractLayer(image, glow, colors.glow), glowTrim);
+    drawLayer(ctx, glowLayer, glow, originW, originH);
+  }
+  if (innerGlow) drawLayer(ctx, extractLayer(image, innerGlow, colors.glow), innerGlow, originW, originH);
+  if (secondary) drawLayer(ctx, extractLayer(image, secondary, colors.secondary), secondary, originW, originH, detailScale);
+  if (base) {
+    const baseLayer = fillLayerBorder(extractLayer(image, base, colors.primary), borderFill, colors.primary);
+    drawLayer(ctx, baseLayer, base, originW, originH);
+  }
+  if (extra) drawLayer(ctx, extractLayer(image, extra, null, true), extra, originW, originH);
 }
 
 // -------------------- Fallback rendering --------------------
