@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lunar Dash</title>
+    <link rel="icon" href="./Images/favicon.ico" type="image/x-icon">
+
+    <!--
+        Game.html used to be its own page. index.html now hosts the main menu,
+        level select, gameplay and pause menu in one place, so this file only
+        forwards old links (carrying any ?level= through) to the new home.
+    -->
+    <meta http-equiv="refresh" content="0; url=./index.html">
+    <script>
+        (function () {
+            var level = new URLSearchParams(window.location.search).get('level');
+            var target = './index.html' + (level ? '?level=' + encodeURIComponent(level) : '');
+            window.location.replace(target);
+        }());
+    </script>
+</head>
+<body>
+    <p>Lunar Dash has moved. <a href="./index.html">Continue to the game</a>.</p>
+</body>
+</html>
